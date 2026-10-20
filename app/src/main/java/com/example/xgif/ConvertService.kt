@@ -44,6 +44,32 @@ class ConvertService : Service() {
                 check(dir.mkdirs()) { "無法建立暫存目錄。" }
                 YoutubeDL.getInstance().init(applicationContext)
                 FFmpeg.getInstance().init(applicationContext)
+                // 轉換前嘗試更新；更新失敗時，繼續使用現有引擎。
+if (!intent.getBooleanExtra("update", false)) {
+    state.value = TaskState(
+        true,
+        "正在檢查並更新 yt-dlp 引擎…"
+    )
+
+    try {
+        val updateResult = YoutubeDL.getInstance().updateYoutubeDL(
+            applicationContext,
+            YoutubeDL.UpdateChannel.STABLE
+        )
+
+        check(updateResult != null) {
+            "引擎更新未完成"
+        }
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        // 保留正常的工作取消行為。
+        throw e
+    } catch (e: Exception) {
+        state.value = TaskState(
+            true,
+            "引擎更新失敗，繼續使用現有版本轉換…"
+        )
+    }
+}
                 if (intent.getBooleanExtra("update", false)) {
                     state.value = TaskState(true, "正在更新擷取引擎…")
                     YoutubeDL.getInstance().updateYoutubeDL(applicationContext)
