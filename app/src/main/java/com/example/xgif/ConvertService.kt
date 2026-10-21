@@ -79,8 +79,16 @@ if (!intent.getBooleanExtra("update", false)) {
                     val tree = Uri.parse(requireNotNull(intent.getStringExtra("tree")))
                     val folder = DocumentFile.fromTreeUri(applicationContext, tree)
                     check(folder != null && folder.isDirectory && folder.canWrite()) { "無法寫入資料夾，請重新選擇保存位置。" }
-                    val width = intent.getIntExtra("width", 480).also { require(it in setOf(320, 480, 720)) }
-                    val fps = intent.getIntExtra("fps", 15).also { require(it in setOf(10, 15, 24)) }
+                    val width = intent.getIntExtra("width", 480).also {
+                        require(it in 100..720) {
+                            "GIF 寬度必須介於 100–720 像素。"
+                        }
+                    }
+                    val fps = intent.getIntExtra("fps", 24).also {
+                        require(it in 1..50) {
+                            "每秒幀數必須介於 1–50。"
+                        }
+                    }
                     val start = intent.getIntExtra("start", 0).also { require(it in 0..86400) }
                     val seconds = intent.getIntExtra("seconds", 10).also { require(it in 1..60) }
                     val index = intent.getIntExtra("index", 1).also { require(it in 1..4) }
