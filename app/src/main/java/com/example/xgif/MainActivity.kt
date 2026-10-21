@@ -24,8 +24,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var status: TextView
     private lateinit var start: EditText
     private lateinit var seconds: EditText
-    private lateinit var width: Spinner
-    private lateinit var fps: Spinner
+    private lateinit var width: Seekbar
+    private lateinit var fps: Seekbar
     private lateinit var index: Spinner
     private lateinit var open: Button
     private lateinit var progress: ProgressBar
@@ -78,10 +78,20 @@ class MainActivity : ComponentActivity() {
         folderText = label("")
         showFolder()
         button("選擇保存資料夾") { chooseFolder.launch(folder) }
-        label("GIF 寬度（像素，保留比例）")
-        width = spinner(listOf("320", "480", "720"), savedInstanceState?.getInt("width") ?: 1)
-        label("每秒幀數")
-        fps = spinner(listOf("10", "15", "24"), savedInstanceState?.getInt("fps") ?: 1)
+        width = numberSlider(
+        title = "GIF 寬度（像素，保留比例）",
+        minimum = 100,
+        maximum = 720,
+        initial = savedInstanceState?.getInt("gifWidthValue", 480) ?: 480,
+        unit = "px"
+        )
+        fps = numberSlider(
+        title = "每秒幀數",
+        minimum = 1,
+        maximum = 50,
+        initial = savedInstanceState?.getInt("gifFpsValue", 24) ?: 24,
+        unit = "FPS"
+        )
         label("起始秒數")
         start = edit("0", true).apply { setText(savedInstanceState?.getString("start") ?: "0") }
         label("片段長度（1–60 秒；預設取前 10 秒）")
@@ -175,6 +185,91 @@ class MainActivity : ComponentActivity() {
     private fun spinner(items: List<String>, selected: Int): Spinner = Spinner(this).apply {
         adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, items)
         setSelection(selected); root.addView(this); controls.add(this)
+    }
+    private fun numberSlider(
+    title: String,
+    minimum: Int,
+    maximum: Int,
+    initial: Int,
+    unit: String
+    ): SeekBar {
+    label(title)
+
+    val valueText = label("", 20f)
+
+    val row = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = android.view.Gravity.CENTER_VERTICAL
+    }
+
+    // progress 從 0 開始，實際值 = minimum + progress。
+    val slider = SeekBar(this).apply {
+        max = maximum - minimum
+        progress = initial.coerceIn(minimum, maximum) - minimum
+        keyProgressIncrement = 1
+        contentDescription = title
+        layoutParams = LinearLayout.LayoutParams(
+            0,
+            dp(48),
+            1f
+        )
+    }
+
+    fun refreshValue() {
+        valueText.text = "${minimum + slider.progress} $unit"
+    }
+
+    slider.setOnSeekBarChangeListener(
+        object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(
+                seekBar: SeekBar?,
+                progress: Int,
+                fromUser: Boolean
+            ) {
+                refreshValue()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        }
+    )
+
+    fun stepButton(symbol: String, step: Int): Button {
+        return Button(this).apply {
+            text = symbol
+            textSize = 18f
+            isAllCaps = false
+            minWidth = 0
+            minimumWidth = 0
+            setPadding(0, 0, 0, 0)
+
+            contentDescription =
+                "$title${if (step < 0) "減少" else "增加"} 1"
+
+            layoutParams = LinearLayout.LayoutParams(
+                dp(48),
+                dp(48)
+            )
+
+            setOnClickListener {
+                slider.progress =
+                    (slider.progress + step).coerceIn(0, slider.max)
+            }
+
+            // 轉換中與其他設定一起停用。
+            controls.add(this)
+        }
+    }
+
+    row.addView(slider)
+    row.addView(stepButton("◀", -1))
+    row.addView(stepButton("▶", 1))
+
+    root.addView(row)
+    controls.add(slider)
+    refreshValue()
+
+    return slider
     }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 }
