@@ -24,8 +24,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var status: TextView
     private lateinit var start: EditText
     private lateinit var seconds: EditText
-    private lateinit var width: Seekbar
-    private lateinit var fps: Seekbar
+    private lateinit var width: SeekBar
+    private lateinit var fps: SeekBar
     private lateinit var index: Spinner
     private lateinit var open: Button
     private lateinit var progress: ProgressBar
