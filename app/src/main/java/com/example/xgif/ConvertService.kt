@@ -102,8 +102,25 @@ if (!intent.getBooleanExtra("update", false)) {
                     request.addOption("-f", "best[ext=mp4]/best")
                     request.addOption("-o", File(dir, "clip.%(ext)s").absolutePath)
                     request.addOption("--recode-video", "gif")
-                    val filter = "trim=start=$start:duration=$seconds,setpts=PTS-STARTPTS,fps=$fps,scale=w='min($width,iw)':h=-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=sierra2_4a[out]"
-                    request.addOption("--postprocessor-args", "VideoConvertor+ffmpeg_o:-filter_complex \"$filter\" -map -0 -map [out] -an -loop 0")
+                    // 保留來源畫面，按指定 FPS 重新安排播放時間。
+                    val filter =
+                        "trim=start=$start:duration=$seconds," +
+                        "settb=AVTB," +
+                        "setpts=N/($fps*TB)," +
+                        "scale=w='min($width,iw)':h=-1:flags=lanczos," +
+                        "split[a][b];" +
+                        "[a]palettegen=stats_mode=diff[p];" +
+                        "[b][p]paletteuse=dither=sierra2_4a[out]"
+
+                    // GIF 的延遲單位為 1/100 秒，設定最後一幀的停留時間。
+                    val lastFrameDelay = (100.0 / fps).toInt().coerceAtLeast(1)
+                    
+                    request.addOption(
+                        "--postprocessor-args",
+                        "VideoConvertor+ffmpeg_o:-filter_complex \"$filter\" " +
+                            "-map -0 -map [out] -an -fps_mode passthrough " +
+                           "-final_delay $lastFrameDelay -loop 0"
+                    )
                     state.value = TaskState(true, "正在解析及下載第 $index 段影片…")
                     processId = UUID.randomUUID().toString()
                     YoutubeDL.getInstance().execute(request, processId, false) { progress, _, line ->
