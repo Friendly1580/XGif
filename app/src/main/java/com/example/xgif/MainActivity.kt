@@ -146,8 +146,8 @@ class MainActivity : ComponentActivity() {
                 prefs.edit().putString("url", url.text.toString()).apply()
                 intent.putExtra("url", normalized).putExtra("tree", tree.toString())
                     .putExtra("start", offset).putExtra("seconds", duration)
-                    .putExtra("width", width.selectedItem.toString().toInt())
-                    .putExtra("fps", fps.selectedItem.toString().toInt())
+                    .putExtra("width", width.progress + 100)
+                    .putExtra("fps", fps.progress + 1)
                     .putExtra("index", index.selectedItem.toString().toInt())
             }
             startForegroundService(intent)
