@@ -168,7 +168,9 @@ class MainActivity : ComponentActivity() {
     }
     override fun onSaveInstanceState(out: Bundle) {
         out.putString("url", url.text.toString()); out.putString("start", start.text.toString()); out.putString("seconds", seconds.text.toString())
-        out.putInt("width", width.selectedItemPosition); out.putInt("fps", fps.selectedItemPosition); out.putInt("index", index.selectedItemPosition)
+        out.putInt("gifWidthValue", width.progress + 100)
+        out.putInt("gifFpsValue", fps.progress + 1)
+        out.putInt("index", index.selectedItemPosition)
         super.onSaveInstanceState(out)
     }
     private fun label(text: String, size: Float = 14f): TextView = TextView(this).apply {
